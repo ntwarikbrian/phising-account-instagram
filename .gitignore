@@ -1,0 +1,17 @@
+# captured target data - evidence, not source. never commit.
+logs/
+*.log
+logs/server.pid
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# editors / os
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
